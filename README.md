@@ -25,12 +25,13 @@ Le domaine d'application de cette implémentation est l'**Informatique (Architec
 ```text
 agentic_rag_project/
 ├── data/
-│   └── cloud_devops.txt           # Base de connaissances locale
+│   └── cloud_devops.txt       # Base de connaissances locale
 ├── .env                       # Fichier des variables d'environnement (non versionné)
 ├── main.py                    # Définition du graphe d'états et du workflow LangGraph
 ├── evaluate.py                # Script de test automatisé (Questions simples et complexes)
 ├── graph_architecture.png     # Visualisation du graphe LangGraph (générée automatiquement)
 └── README.md                  # Documentation du projet
+└── Rapport_Final.pdf          # Rapport final du projet
 ```
 
 ## Configuration de l'environnement
