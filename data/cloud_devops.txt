@@ -1,0 +1,92 @@
+
+Amazon S3 Standard-Infrequent Access (S3 Standard-IA) est une classe de stockage destinée aux données qui sont consultées moins fréquemment, mais qui exigent un accès rapide en cas de besoin.
+Une stratégie de déploiement Blue-Green réduit les temps d'arrêt et les risques en exécutant deux environnements de production identiques (Blue et Green). Un seul gère le trafic réel à la fois.
+Dans Kubernetes, une livenessProbe détermine si un conteneur doit être redémarré. Une readinessProbe indique si le conteneur est prêt à accepter du trafic HTTP.
+Terraform utilise des fichiers d'état (.tfstate) pour cartographier les ressources réelles par rapport à la configuration déclarative.
+# Fondamentaux Cloud
+
+## IaaS, PaaS et SaaS
+
+- **IaaS** (Infrastructure as a Service) fournit des ressources de calcul, stockage et réseau virtualisées. L'équipe cliente garde généralement la responsabilité du système d'exploitation, des applications et des données.
+- **PaaS** (Platform as a Service) fournit une plateforme d'exécution managée. Le fournisseur gère une part plus importante de l'infrastructure et l'équipe se concentre sur le code et les données.
+- **SaaS** (Software as a Service) fournit une application prête à utiliser ; le fournisseur gère l'application et l'infrastructure.
+
+## Élasticité, scalabilité et haute disponibilité
+
+L'**élasticité** adapte les ressources à la charge. La **scalabilité horizontale** ajoute ou retire des instances ; la scalabilité verticale augmente les ressources d'une instance. La **haute disponibilité** réduit les interruptions grâce à la redondance, la répartition de charge et le déploiement sur plusieurs zones de disponibilité.
+
+## Résilience et reprise
+
+Une architecture résiliente prévoit la défaillance : contrôles de santé, répliques, sauvegardes, files de messages et procédures de restauration. Le **RTO** est la durée maximale acceptable pour restaurer un service après incident ; le **RPO** est la quantité maximale acceptable de données perdues, exprimée en durée.
+
+## Architecture de référence
+
+Pour une application Web moderne : un répartiteur de charge reçoit les requêtes, des services applicatifs stateless sont répliqués dans plusieurs zones, une base de données managée est sauvegardée et répliquée si le besoin l'impose, et un stockage objet conserve les fichiers. Les secrets restent dans un gestionnaire de secrets, jamais dans le code source.
+
+# Conteneurs et Kubernetes
+
+## Images, conteneurs et Dockerfile
+
+Une **image** est un modèle immuable contenant l'application et ses dépendances. Un **conteneur** est une exécution isolée d'une image. Le **Dockerfile** décrit de manière déclarative les étapes de construction de l'image : image de base, copie des fichiers, installation des dépendances et commande de démarrage.
+
+Bonnes pratiques : utiliser une image de base réduite, fixer les versions, exclure les fichiers inutiles avec `.dockerignore`, lancer le processus sans privilège root et construire des images multi-étapes quand cela réduit la taille finale.
+
+## Kubernetes
+
+Kubernetes orchestre les conteneurs. Un **Pod** est la plus petite unité déployable. Un **Deployment** décrit l'état désiré d'une application stateless et gère les ReplicaSets, les mises à jour progressives et le retour arrière. Un **Service** offre une adresse stable vers un ensemble de Pods. Un **Ingress** ou un Gateway expose des routes HTTP/HTTPS vers les services.
+
+## Déploiement fiable
+
+Un Deployment utilise des répliques, des probes de readiness/liveness et une stratégie `RollingUpdate`. La readiness probe évite d'envoyer du trafic vers un Pod non prêt. Pour réduire le risque, on peut utiliser canary release ou blue/green deployment, surveiller les métriques puis exécuter un rollback vers une révision connue si les indicateurs se dégradent.
+
+## Sécurité Kubernetes
+
+Le principe de moindre privilège s'applique aux comptes de service et RBAC. Les secrets ne doivent pas être codés dans les manifestes publics. Les NetworkPolicies limitent les communications entre Pods. Les images doivent être analysées, signées si possible, puis tirées depuis un registre contrôlé.
+
+# CI/CD et GitOps
+
+## Intégration continue et livraison continue
+
+La **CI** (Continuous Integration) automatise la compilation, les tests, l'analyse de code et la production d'artefacts à chaque modification. La **CD** (Continuous Delivery ou Deployment selon le niveau d'automatisation) propage l'artefact validé vers les environnements.
+
+Une pipeline recommandée comporte : validation du formatage, tests unitaires, analyse de sécurité des dépendances, construction d'image, scan de vulnérabilités, publication vers un registre, tests d'intégration, déploiement de préproduction, tests de fumée et validation avant production.
+
+## Contrôles de qualité et rollback
+
+Une pipeline doit échouer tôt. Les secrets de CI sont gérés par le coffre de secrets du fournisseur. Le déploiement en production est conditionné par des seuils de qualité et des métriques de santé. La stratégie de rollback doit être testée : conserver l'image précédente, la configuration précédente et la révision Kubernetes antérieure.
+
+## GitOps
+
+GitOps utilise Git comme source de vérité de l'état désiré. Les manifestes ou chart Helm sont versionnés, revus par pull request et synchronisés vers le cluster par un contrôleur. Cette approche renforce la traçabilité, facilite l'audit et permet de revenir à une configuration antérieure par commit ou révision.
+
+# Observabilité, fiabilité et sécurité
+
+## Les trois piliers de l'observabilité
+
+Les **métriques** sont des séries numériques agrégées comme la latence p95, le taux d'erreur ou l'utilisation CPU. Les **logs** décrivent des événements détaillés et doivent inclure des identifiants de corrélation. Les **traces distribuées** suivent une requête à travers plusieurs services. Ensemble, ils permettent de détecter, diagnostiquer et expliquer une panne.
+
+## SLI, SLO et alertes
+
+Un **SLI** est une mesure de fiabilité, par exemple le pourcentage de requêtes HTTP réussies ou la latence p95. Un **SLO** fixe une cible sur le SLI. Les alertes doivent être actionnables et liées à un impact utilisateur. Un tableau de bord utile affiche trafic, erreurs, durée, saturation et état des dépendances.
+
+## Diagnostic d'une hausse de latence
+
+Pour investiguer une hausse de latence : vérifier la période et le périmètre, comparer les services et endpoints touchés, examiner erreurs et saturation, suivre une trace lente, corréler avec un déploiement récent et vérifier les dépendances (base, cache, API externe). La correction peut être un rollback, une augmentation contrôlée de capacité, une optimisation de requête ou un mécanisme de cache, après confirmation de la cause.
+
+## Sécurité applicative et opérationnelle
+
+Appliquer le moindre privilège, une authentification forte, la rotation des secrets, le chiffrement en transit et au repos lorsque disponible, et des journaux d'audit. Les dépendances et images conteneurisées sont analysées avant déploiement. Un plan de réponse aux incidents définit détection, qualification, communication, confinement, restauration et retour d'expérience.
+
+# Architecture microservices et données
+
+## Principes de conception
+
+Un microservice doit avoir une responsabilité cohérente, une interface contractuelle et une observabilité adaptée. Les services stateless peuvent être multipliés horizontalement derrière un répartiteur de charge. Les appels synchrones en chaîne augmentent le risque de propagation de panne : timeouts, retries bornés, circuit breakers et files de messages sont des mécanismes utiles.
+
+## Données et événements
+
+Chaque service doit limiter le couplage aux données des autres services. Les échanges asynchrones via événements permettent de découpler certaines étapes, mais imposent l'idempotence, la gestion des doublons et la traçabilité. Une base de données nécessite une stratégie de sauvegarde, de restauration et, selon le besoin, de réplication.
+
+## Cas d'une plateforme à trafic variable
+
+Une plateforme de commerce peut utiliser : un CDN pour le contenu statique, un load balancer, des services stateless répliqués, une file pour les traitements non immédiats, un cache pour les lectures fréquentes, une base managée sauvegardée, une supervision et des alertes. Les mécanismes de limites de débit et la dégradation contrôlée protègent le coeur du système lors d'une surcharge.
